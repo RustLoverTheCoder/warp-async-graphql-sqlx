@@ -3,7 +3,10 @@ use anyhow::Context;
 use log::LevelFilter;
 use serde::Deserialize;
 use serde_aux::field_attributes::deserialize_number_from_string;
-use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
+use sqlx::{
+    postgres::{PgConnectOptions, PgPoolOptions},
+    PgPool,
+};
 use sqlx::{ConnectOptions, Pool, Postgres};
 use std::sync::Arc;
 use std::{any::type_name, env::current_dir};
@@ -127,7 +130,7 @@ pub struct DatabaseConfig {
 
 impl DatabaseConfig {
     /// 初始化数据库连接池
-    pub async fn init(config: &DatabaseConfig) -> anyhow::Result<Arc<Pool<Postgres>>> {
+    pub fn init(config: &DatabaseConfig) -> anyhow::Result<Pool<Postgres>> {
         let mut options = PgConnectOptions::new()
             .username(&config.username)
             .password(&config.password)
@@ -138,10 +141,14 @@ impl DatabaseConfig {
         options.log_statements(LevelFilter::Debug);
         let pool = PgPoolOptions::new()
             .connect_timeout(Duration::from_secs(2))
-            .connect_with(options)
-            .await?;
+            .connect_lazy_with(options);
         log::info!("初始化 '数据库' 完成");
-        Ok(Arc::new(pool))
+        Ok(pool)
+    }
+
+    /// 数据库连接校验
+    pub async fn check(pool: &PgPool) {
+        pool.acquire().await.expect("获取数据库连接失败");
     }
 }
 
@@ -211,7 +218,7 @@ impl CryptoConfig {
         let refash_expires = self
             .jwt
             .refash_expires
-            .unwrap_or_else(|| Duration::from_secs(30 * 60));
+            .unwrap_or_else(|| Duration::from_secs(30 * 60 * 7));
 
         let crypto = CryptoService {
             hash_salt: Arc::new(self.hash.salt.clone()),
@@ -221,7 +228,7 @@ impl CryptoConfig {
             refash_expires: Arc::new(chrono::Duration::from_std(refash_expires).unwrap()),
             issuer: Arc::new(self.jwt.issuer.clone()),
         };
-        log::info!("初始化 '加密服务:[{}]' 完成!", type_name::<CryptoService>());
+        log::info!("初始化 '加密服务: [{}]' 完成!", type_name::<CryptoService>());
         Arc::new(crypto)
     }
 }

@@ -16,11 +16,11 @@ health_check = "/health_check"
 # graphql 配置
 [graphql]
 ## graphql访问路径
-path = "/graphql"
+path = "graphql"
 ## ApolloTracing 插件 是否开启
 tracing = true
 ## graphiql UI 访问路径
-graphiql.path = "/graphiql"
+graphiql.path = "graphiql"
 ## graphiql UI 是否开启
 graphiql.enable = true
 
