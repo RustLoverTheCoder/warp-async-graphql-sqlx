@@ -9,7 +9,7 @@ async fn main() -> anyhow::Result<()> {
     let application = Application::build().await?;
 
     log::info!("🎉Started Application in {:.3?}", instant.elapsed());
-    
+
     application.await;
 
     Ok(())

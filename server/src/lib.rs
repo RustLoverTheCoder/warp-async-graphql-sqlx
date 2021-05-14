@@ -1,16 +1,10 @@
 use std::{convert::Infallible, future::Future, sync::Arc};
 
-use async_graphql::{
-    extensions::{ApolloTracing, Logger},
-    http::{playground_source, GraphQLPlaygroundConfig},
-    EmptyMutation, EmptySubscription, Schema,
-};
 use async_graphql_warp::BadRequest;
 use regex::Regex;
 use security::crypto::CryptoService;
 use sqlx::{Pool, Postgres};
-use warp::{http::Response, hyper::StatusCode, Filter, Rejection};
-use web::gql::{queries::QueryRoot, ServiceSchema};
+use warp::{Filter, Rejection, hyper::StatusCode};
 
 use crate::config::configs::{Configs, CryptoConfig, DatabaseConfig, LogConfig};
 
@@ -66,36 +60,11 @@ impl Application {
         // 验证数据库连接
         DatabaseConfig::check(&POOL).await;
 
-        // graphql 入库
-        let mut schema =
-            Schema::build(QueryRoot::default(), EmptyMutation, EmptySubscription).extension(Logger);
-        // 是否开启 ApolloTracing
-        if CONFIGS.graphql.tracing.unwrap_or(false) {
-            schema = schema.extension(ApolloTracing);
-        }
-        let graphql_path = CONFIGS.graphql.path.clone();
-        let graphql = async_graphql_warp::graphql(schema.finish())
-            .and_then(
-                |(schema, request): (ServiceSchema, async_graphql::Request)| async move {
-                    Ok::<_, Infallible>(async_graphql_warp::Response::from(
-                        schema.execute(request).await,
-                    ))
-                },
-            )
-            .and(warp::path(graphql_path.clone()));
+        // graphql 入口
+        let graphql = web::gql::graphql(CONFIGS.clone());
 
         // playground 入口
-        let graphiql_path = CONFIGS.graphql.graphiql.path.clone();
-        let graphql_playground =
-            warp::path(graphiql_path.clone())
-                .and(warp::get())
-                .map(move || {
-                    Response::builder()
-                        .header("content-type", "text/html")
-                        .body(playground_source(GraphQLPlaygroundConfig::new(
-                            &graphiql_path,
-                        )))
-                });
+        let graphql_playground = web::gql::graphiql(CONFIGS.clone());
 
         // 错误处理
         let recover = |err: Rejection| async move {
