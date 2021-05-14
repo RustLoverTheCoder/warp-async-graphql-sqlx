@@ -81,13 +81,11 @@ impl Application {
             ))
         };
 
-        let routes = 
-        // playground 入口
-        playground
-        // graphql 入口
-        .or(graphql)
-        // 错误处理
-        .recover(recover);
+        let routes = playground
+            // graphql 入口
+            .or(graphql)
+            // 错误处理
+            .recover(recover);
 
         let addr = CONFIGS
             .server

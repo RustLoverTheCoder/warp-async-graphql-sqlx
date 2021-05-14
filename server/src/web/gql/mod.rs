@@ -41,7 +41,9 @@ pub fn graphql(
     warp::path(config.graphql.path.clone())
         .and(async_graphql_warp::graphql(schema.finish()))
         .and_then(|(schema, request): (ServiceSchema, Request)| async move {
-            Ok::<_, Infallible>(async_graphql_warp::Response::from(schema.execute(request).await))
+            Ok::<_, Infallible>(async_graphql_warp::Response::from(
+                schema.execute(request).await,
+            ))
         })
 }
 
