@@ -228,7 +228,10 @@ impl CryptoConfig {
             refash_expires: Arc::new(chrono::Duration::from_std(refash_expires).unwrap()),
             issuer: Arc::new(self.jwt.issuer.clone()),
         };
-        log::info!("初始化 '加密服务: [{}]' 完成!", type_name::<CryptoService>());
+        log::info!(
+            "初始化 '加密服务: [{}]' 完成!",
+            type_name::<CryptoService>()
+        );
         Arc::new(crypto)
     }
 }

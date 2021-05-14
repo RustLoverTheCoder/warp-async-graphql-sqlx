@@ -1,10 +1,10 @@
-use std::{convert::Infallible, future::Future, sync::Arc};
+use std::{convert::Infallible, future::Future, net::SocketAddrV4, sync::Arc};
 
 use async_graphql_warp::BadRequest;
 use regex::Regex;
 use security::crypto::CryptoService;
 use sqlx::{Pool, Postgres};
-use warp::{Filter, Rejection, hyper::StatusCode};
+use warp::{hyper::StatusCode, Filter, Rejection};
 
 use crate::config::configs::{Configs, CryptoConfig, DatabaseConfig, LogConfig};
 
@@ -64,7 +64,7 @@ impl Application {
         let graphql = web::gql::graphql(CONFIGS.clone());
 
         // playground 入口
-        let graphql_playground = web::gql::graphiql(CONFIGS.clone());
+        let playground = web::gql::graphiql(CONFIGS.clone());
 
         // 错误处理
         let recover = |err: Rejection| async move {
@@ -81,9 +81,20 @@ impl Application {
             ))
         };
 
-        let routes = graphql_playground.or(graphql).recover(recover);
+        let routes = 
+        // playground 入口
+        playground
+        // graphql 入口
+        .or(graphql)
+        // 错误处理
+        .recover(recover);
 
-        let serve = warp::serve(routes).run(([0, 0, 0, 0], 8000));
+        let addr = CONFIGS
+            .server
+            .get_address()
+            .parse::<SocketAddrV4>()
+            .unwrap();
+        let serve = warp::serve(routes).run(addr);
 
         Ok(serve)
     }
