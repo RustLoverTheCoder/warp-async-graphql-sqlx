@@ -1,11 +1,13 @@
 use async_graphql::*;
 use validator::Validate;
 
-use crate::domain::users::{TestValidator, Users, UsersToken};
 use crate::service::users::{ExtUsersService, UsersService};
 use crate::web::gql::GraphqlResult;
-use crate::State;
 use crate::{common::error::errors::AppError, domain::users::LoginVM, EMAIL_REGEX};
+use crate::{
+    domain::users::{TestValidator, Users, UsersToken},
+    CRYPTO,
+};
 
 /// 定义查询根节点
 #[derive(MergedObject, Default)]
@@ -29,7 +31,7 @@ impl PingQuery {
 #[Object]
 impl UsersQuery {
     /// 用户登录
-    async fn user_sign_in(&self, ctx: &Context<'_>, vm: LoginVM) -> GraphqlResult<UsersToken> {
+    async fn user_sign_in(&self, vm: LoginVM) -> GraphqlResult<UsersToken> {
         // 参数校验
         vm.validate()
             .map_err(AppError::RequestParameterError.validation_extend())?;
@@ -38,13 +40,10 @@ impl UsersQuery {
         // 先判断用户登录方式
         let is_email_login = EMAIL_REGEX.is_match(&login);
 
-        // 获取数据库连接池
-        let pool = State::get_pool(ctx)?;
-
         let users = if is_email_login {
-            UsersService::find_by_email(&pool, &login).await?
+            UsersService::find_by_email(&login).await?
         } else {
-            UsersService::find_by_username(&pool, &login).await?
+            UsersService::find_by_username(&login).await?
         };
 
         // 判断用户是否存在
@@ -54,9 +53,7 @@ impl UsersQuery {
         };
 
         // 验证密码是否正确
-        let crypto = State::get_crypto_server(ctx)?;
-
-        let verify = crypto
+        let verify = CRYPTO
             .verify_password(&vm.password, &users.password_hash)
             .await;
 
@@ -71,7 +68,7 @@ impl UsersQuery {
         };
 
         // todo 代码抽到 service 层去 这一次进做参数校验
-        let (access_token, refash_token, expires) = crypto.generate_jwt(&users.id).await?;
+        let (access_token, refash_token, expires) = CRYPTO.generate_jwt(&users.id).await?;
 
         let users_token = UsersToken {
             access_token,
@@ -83,29 +80,22 @@ impl UsersQuery {
     }
 
     /// 根据用户名查询用户
-    async fn find_by_username(
-        &self,
-        ctx: &Context<'_>,
-        username: String,
-    ) -> GraphqlResult<Option<Users>> {
-        let pool = State::get_pool(ctx)?;
-        Ok(UsersService::find_by_username(&pool, &username)
+    async fn find_by_username(&self, username: String) -> GraphqlResult<Option<Users>> {
+        Ok(UsersService::find_by_username(&username)
             .await
             .map_err(AppError::InternalError.log_extend())?)
     }
 
     /// 根据用户名查询用户2
-    async fn find_by_username2(&self, ctx: &Context<'_>, username: String) -> GraphqlResult<Users> {
-        let pool = State::get_pool(ctx)?;
-        Ok(UsersService::find_by_username2(&pool, &username)
+    async fn find_by_username2(&self, username: String) -> GraphqlResult<Users> {
+        Ok(UsersService::find_by_username2(&username)
             .await
             .map_err(AppError::InternalError.log_extend())?)
     }
 
     /// 检查用户名是否存在
-    async fn exists_by_username(&self, ctx: &Context<'_>, username: String) -> GraphqlResult<bool> {
-        let pool = State::get_pool(ctx)?;
-        Ok(UsersService::exists_by_username(&pool, &username)
+    async fn exists_by_username(&self, username: String) -> GraphqlResult<bool> {
+        Ok(UsersService::exists_by_username(&username)
             .await
             .map_err(AppError::InternalError.log_extend())?)
     }

@@ -132,7 +132,7 @@ pub struct DatabaseConfig {
 
 impl DatabaseConfig {
     /// 初始化数据库连接池
-    pub async fn init(config: &DatabaseConfig) -> anyhow::Result<Arc<Pool<Postgres>>> {
+    pub fn init(config: &DatabaseConfig) -> anyhow::Result<Pool<Postgres>> {
         let mut options = PgConnectOptions::new()
             .username(&config.username)
             .password(&config.password)
@@ -143,15 +143,9 @@ impl DatabaseConfig {
         options.log_statements(LevelFilter::Debug);
         let pool = PgPoolOptions::new()
             .connect_timeout(Duration::from_secs(2))
-            .connect_with(options)
-            .await?;
+            .connect_lazy_with(options);
         log::info!("初始化 '数据库' 完成");
-        Ok(Arc::new(pool))
-    }
-
-    /// 数据库连接校验
-    pub async fn check(pool: &PgPool) {
-        pool.acquire().await.expect("获取数据库连接失败");
+        Ok(pool)
     }
 }
 

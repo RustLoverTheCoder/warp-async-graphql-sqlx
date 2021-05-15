@@ -1,10 +1,10 @@
 use async_graphql::*;
 use validator::*;
 
-use crate::domain::users::Users;
 use crate::service::users::{ExtUsersService, UsersService};
 use crate::web::gql::GraphqlResult;
-use crate::{common::error::errors::AppError, domain::users::NewUser, State};
+use crate::{common::error::errors::AppError, domain::users::NewUser};
+use crate::{domain::users::Users, CRYPTO};
 
 /// 变更根节点
 #[derive(MergedObject, Default)]
@@ -27,29 +27,26 @@ impl UsersMutation {
             .validate()
             .map_err(AppError::RequestParameterError.validation_extend())?;
 
-        let pool = State::get_pool(ctx)?;
-        let crypto = State::get_crypto_server(ctx)?;
-
         // 处理为 小写
         new_user.username.make_ascii_lowercase();
         new_user.email.make_ascii_lowercase();
 
         // 检查用户名重复
-        let exists = UsersService::exists_by_username(&pool, &new_user.username).await?;
+        let exists = UsersService::exists_by_username(&new_user.username).await?;
         if exists {
             return Err(AppError::UsernameAlreadyExists.extend());
         }
 
         // 检查邮箱重复
-        let exists = UsersService::exists_by_email(&pool, &new_user.email).await?;
+        let exists = UsersService::exists_by_email(&new_user.email).await?;
         if exists {
             return Err(AppError::EmailAlreadyExists.extend());
         }
 
         // 密码哈希
-        let password_hash = crypto.generate_password_hash(&new_user.password).await?;
+        let password_hash = CRYPTO.generate_password_hash(&new_user.password).await?;
 
-        let user = UsersService::user_register(&pool, &new_user, &password_hash).await?;
+        let user = UsersService::user_register(&new_user, &password_hash).await?;
         Ok(user)
     }
 }

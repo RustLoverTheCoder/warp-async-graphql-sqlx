@@ -12,7 +12,7 @@ use warp::{
     Filter, Rejection,
 };
 
-use crate::{config::configs::Configs, State};
+use crate::config::configs::Configs;
 use std::{convert::Infallible, sync::Arc};
 
 pub mod mutations;
@@ -27,14 +27,12 @@ pub type GraphqlResult<T> = std::result::Result<T, async_graphql::Error>;
 // graphql 入口
 pub fn graphql(
     config: Arc<Configs>,
-    state: Arc<State>,
 ) -> impl Filter<Extract = (async_graphql_warp::Response,), Error = Rejection> + Clone {
     let mut schema = Schema::build(
         QueryRoot::default(),
         MutationRoot::default(),
         EmptySubscription,
     )
-    .data(state)
     .extension(Logger);
 
     // 是否开启 ApolloTracing
