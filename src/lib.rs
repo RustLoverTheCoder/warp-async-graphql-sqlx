@@ -1,14 +1,11 @@
 use std::{convert::Infallible, future::Future, sync::Arc};
 
-use crate::{
-    config::configs::{Configs, CryptoConfig, DatabaseConfig, LogConfig},
-    web::gql::GraphqlResult,
-};
-use async_graphql::Context as GraphQLContext;
+use crate::config::configs::{Configs, CryptoConfig, DatabaseConfig, LogConfig};
+
 use async_graphql_warp::BadRequest;
 use regex::Regex;
 use security::crypto::CryptoService;
-use sqlx::{PgPool, Pool, Postgres};
+use sqlx::{Pool, Postgres};
 use warp::{hyper::StatusCode, Filter, Rejection};
 
 pub mod common;

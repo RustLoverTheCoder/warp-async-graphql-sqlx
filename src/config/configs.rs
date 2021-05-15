@@ -3,10 +3,7 @@ use anyhow::Context;
 use log::LevelFilter;
 use serde::Deserialize;
 use serde_aux::field_attributes::deserialize_number_from_string;
-use sqlx::{
-    postgres::{PgConnectOptions, PgPoolOptions},
-    PgPool,
-};
+use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
 use sqlx::{ConnectOptions, Pool, Postgres};
 use std::{any::type_name, env::current_dir};
 use std::{net::SocketAddrV4, sync::Arc};

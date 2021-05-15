@@ -19,7 +19,7 @@ impl UsersMutation {
     /// 注册用户
     async fn user_register(
         &self,
-        ctx: &Context<'_>,
+        _ctx: &Context<'_>,
         mut new_user: NewUser,
     ) -> GraphqlResult<Users> {
         // 参数校验
