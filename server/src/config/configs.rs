@@ -8,8 +8,8 @@ use sqlx::{
     PgPool,
 };
 use sqlx::{ConnectOptions, Pool, Postgres};
-use std::{net::SocketAddrV4, sync::Arc};
 use std::{any::type_name, env::current_dir};
+use std::{net::SocketAddrV4, sync::Arc};
 use std::{path::PathBuf, time::Duration};
 
 /// 配置文件目录

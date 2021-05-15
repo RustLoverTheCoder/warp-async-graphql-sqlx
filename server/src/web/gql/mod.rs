@@ -64,7 +64,7 @@ pub fn graphiql(
         &path
     );
 
-    warp::path(path.clone()).and(warp::get()).map(move || {
+    warp::path(path).and(warp::get()).map(move || {
         Response::builder()
             .header("content-type", "text/html")
             .body(playground_source(GraphQLPlaygroundConfig::new(

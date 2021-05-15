@@ -1,22 +1,23 @@
 use std::{convert::Infallible, future::Future, sync::Arc};
 
+use crate::{
+    config::configs::{Configs, CryptoConfig, DatabaseConfig, LogConfig},
+    web::gql::GraphqlResult,
+};
+use async_graphql::Context as GraphQLContext;
 use async_graphql_warp::BadRequest;
 use regex::Regex;
 use security::crypto::CryptoService;
 use sqlx::{PgPool, Pool, Postgres};
 use warp::{hyper::StatusCode, Filter, Rejection};
-use async_graphql::Context as GraphQLContext;
-use crate::{config::configs::{Configs, CryptoConfig, DatabaseConfig, LogConfig}, web::gql::GraphqlResult};
 
-
-
+pub mod common;
 pub mod config;
-pub mod security;
-pub mod web;
 pub mod domain;
 pub mod repository;
+pub mod security;
 pub mod service;
-pub mod common;
+pub mod web;
 
 lazy_static::lazy_static! {
     // 正则
@@ -50,22 +51,22 @@ pub struct Application;
 impl Application {
     // 构建服务器
     pub async fn build() -> anyhow::Result<impl Future> {
-         // 初始化静态常量
-         lazy_static::initialize(&EMAIL_REGEX);
-         lazy_static::initialize(&USERNAME_REGEX);
-         log::info!("初始化 '静态常量' 完成");
+        // 初始化静态常量
+        lazy_static::initialize(&EMAIL_REGEX);
+        lazy_static::initialize(&USERNAME_REGEX);
+        log::info!("初始化 '静态常量' 完成");
 
-         let configs = Configs::init_config()?;
+        let configs = Configs::init_config()?;
 
-         // 初始日志
-         LogConfig::init(&configs.log)?;
+        // 初始日志
+        LogConfig::init(&configs.log)?;
 
-         let pool = DatabaseConfig::init(&configs.database).await.unwrap();
-         let crypto = CryptoConfig::get_crypto_server(&configs.crypto);
-         let state = Arc::new(State { pool, crypto });
+        let pool = DatabaseConfig::init(&configs.database).await.unwrap();
+        let crypto = CryptoConfig::get_crypto_server(&configs.crypto);
+        let state = Arc::new(State { pool, crypto });
 
         // graphql 入口
-        let graphql = web::gql::graphql(configs.clone(), state.clone());
+        let graphql = web::gql::graphql(configs.clone(), state);
 
         // playground 入口
         let playground = web::gql::graphiql(configs.clone());
