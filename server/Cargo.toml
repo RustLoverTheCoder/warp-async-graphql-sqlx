@@ -23,7 +23,6 @@ lazy_static = "1.4.0"
 regex = "1.5.4"
 uuid = {version = "0.8.2", features = ["serde", "v4"]}
 validator = {version = "0.13.0", features = ["derive"]}
-listenfd = "0.3.3"
 
 # 错误处理
 anyhow = "1.0.40"

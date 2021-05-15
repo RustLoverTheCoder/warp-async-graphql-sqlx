@@ -67,12 +67,10 @@ impl UsersQuery {
             // 验证不通过
             Ok(verify) if !verify => return Err(AppError::UsernameOrPasswordError.extend()),
             // 验证通过
-            _ => log::info!("用户: [{}] 登录成功", &users.username),
+            _ => log::info!("用户: [{}] 验证通过", &users.username),
         };
 
-        // todo!("生成jsonwebtoken并返回");
         // todo 代码抽到 service 层去 这一次进做参数校验
-
         let (access_token, refash_token, expires) = crypto.generate_jwt(&users.id).await?;
 
         let users_token = UsersToken {
