@@ -1,4 +1,4 @@
-use std::{convert::Infallible, future::Future, net::SocketAddrV4, sync::Arc};
+use std::{convert::Infallible, future::Future, sync::Arc};
 
 use async_graphql_warp::BadRequest;
 use regex::Regex;
@@ -87,11 +87,7 @@ impl Application {
             // 错误处理
             .recover(recover);
 
-        let addr = CONFIGS
-            .server
-            .get_address()
-            .parse::<SocketAddrV4>()
-            .unwrap();
+        let addr = CONFIGS.server.get_address();
         let serve = warp::serve(routes).run(addr);
 
         Ok(serve)

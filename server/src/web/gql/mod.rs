@@ -53,9 +53,11 @@ pub fn graphiql(
 ) -> impl Filter<Extract = (Result<Response<String>, Error>,), Error = Rejection> + Clone {
     let path = config.graphql.graphiql.path.clone();
 
+    log::info!("🚀GraphQL UI: http://{}:{}/{}", config.server.host, config.server.port, &path);
+    
     warp::path(path.clone()).and(warp::get()).map(move || {
         Response::builder()
             .header("content-type", "text/html")
-            .body(playground_source(GraphQLPlaygroundConfig::new(&path)))
+            .body(playground_source(GraphQLPlaygroundConfig::new(&config.graphql.path)))
     })
 }

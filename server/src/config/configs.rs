@@ -8,7 +8,7 @@ use sqlx::{
     PgPool,
 };
 use sqlx::{ConnectOptions, Pool, Postgres};
-use std::sync::Arc;
+use std::{net::SocketAddrV4, sync::Arc};
 use std::{any::type_name, env::current_dir};
 use std::{path::PathBuf, time::Duration};
 
@@ -88,8 +88,10 @@ pub struct ServerConfig {
 
 impl ServerConfig {
     /// 获取服务地址
-    pub fn get_address(&self) -> String {
+    pub fn get_address(&self) -> SocketAddrV4 {
         format!("{}:{}", &self.host, &self.port)
+            .parse::<SocketAddrV4>()
+            .unwrap()
     }
 
     /// 获取健康检查地址
