@@ -32,7 +32,6 @@ pub trait ExtUsersRepository {
 #[async_trait]
 impl ExtUsersRepository for UsersRepository {
     async fn create(new_user: &NewUser, password_hash: &str) -> Result<Users> {
-        let mut conn = POOL.acquire().await?;
         let row = sqlx::query_as!(
             Users,
             //language=sql
@@ -42,7 +41,7 @@ impl ExtUsersRepository for UsersRepository {
             &new_user.email,
             password_hash
         )
-            .fetch_one(&mut conn)
+            .fetch_one(&POOL.clone())
             .await
             .context("创建用户")?;
 
@@ -51,14 +50,13 @@ impl ExtUsersRepository for UsersRepository {
 
     /// 根据用户名查询用户
     async fn find_by_username(username: &str) -> Result<Option<Users>> {
-        let mut conn = POOL.acquire().await?;
         let row = sqlx::query_as!(
             Users,
             //language=sql
             "SELECT * FROM users WHERE username = $1",
             username
         )
-        .fetch_optional(&mut conn)
+        .fetch_optional(&POOL.clone())
         .await
         .context("查询用户")?;
 
@@ -66,14 +64,13 @@ impl ExtUsersRepository for UsersRepository {
     }
 
     async fn find_by_email(email: &str) -> Result<Option<Users>> {
-        let mut conn = POOL.acquire().await?;
         let row = sqlx::query_as!(
             Users,
             //language=sql
             "SELECT * FROM users WHERE email = $1",
             email
         )
-        .fetch_optional(&mut conn)
+        .fetch_optional(&POOL.clone())
         .await
         .context("查询用户")?;
 
@@ -82,14 +79,13 @@ impl ExtUsersRepository for UsersRepository {
 
     /// 根据用户名查询用户2
     async fn find_by_username2(username: &str) -> Result<Users> {
-        let mut conn = POOL.acquire().await?;
         let row = sqlx::query_as!(
             Users,
             //language=sql
             "SELECT * FROM users WHERE username = $1",
             username
         )
-        .fetch_one(&mut conn)
+        .fetch_one(&POOL.clone())
         .await
         .context("根据用户名查询用户2")?;
 
@@ -104,6 +100,7 @@ impl ExtUsersRepository for UsersRepository {
             "SELECT EXISTS(SELECT 1 FROM users WHERE username = $1)",
             username,
         )
+        // .fetch_one(&POOL.clone())
         .fetch_one(&mut conn)
         .await
         .context("检查用户是否存在")?;
@@ -117,7 +114,6 @@ impl ExtUsersRepository for UsersRepository {
             "SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)",
             email,
         )
-        // .fetch_one(&mut conn)
         .fetch_one(&POOL.clone())
         .await
         .context("检查邮箱是否存在")?;
