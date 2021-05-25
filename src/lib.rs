@@ -1,12 +1,12 @@
-use std::{convert::Infallible, future::Future, sync::Arc};
+use std::{future::Future, sync::Arc};
 
-use crate::config::configs::{Configs, CryptoConfig, DatabaseConfig, LogConfig};
+use crate::{common::error::errors, config::configs::{Configs, CryptoConfig, DatabaseConfig, LogConfig}};
 
-use async_graphql_warp::BadRequest;
+
 use regex::Regex;
 use security::crypto::CryptoService;
 use sqlx::{Pool, Postgres};
-use warp::{hyper::StatusCode, Filter, Rejection};
+use warp::{Filter};
 
 pub mod common;
 pub mod config;
@@ -55,26 +55,11 @@ impl Application {
         // playground 入口
         let playground = web::gql::graphiql(CONFIGS.clone());
 
-        // 错误处理
-        let recover = |err: Rejection| async move {
-            if let Some(BadRequest(err)) = err.find() {
-                return Ok::<_, Infallible>(warp::reply::with_status(
-                    err.to_string(),
-                    StatusCode::BAD_REQUEST,
-                ));
-            }
-
-            Ok(warp::reply::with_status(
-                "INTERNAL_SERVER_ERROR".to_string(),
-                StatusCode::INTERNAL_SERVER_ERROR,
-            ))
-        };
-
         let routes = playground
             // graphql 入口
             .or(graphql)
             // 错误处理
-            .recover(recover);
+            .recover(|err| errors::recover(err));
 
         let addr = CONFIGS.server.get_address();
         let serve = warp::serve(routes).run(addr);

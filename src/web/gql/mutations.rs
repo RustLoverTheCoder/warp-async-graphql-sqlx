@@ -24,8 +24,8 @@ impl UsersMutation {
     ) -> GraphqlResult<Users> {
         // 参数校验
         new_user
-            .validate()
-            .map_err(AppError::RequestParameterError.validation_extend())?;
+            .validate()?;
+            // .map_err(AppError::RequestParameterError.validation_extend())?;
 
         // 处理为 小写
         new_user.username.make_ascii_lowercase();
