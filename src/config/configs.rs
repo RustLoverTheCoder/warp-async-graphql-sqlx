@@ -79,8 +79,6 @@ pub struct ServerConfig {
     pub host: String,
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub port: u16,
-    pub context_path: Option<String>,
-    pub health_check: Option<String>,
 }
 
 impl ServerConfig {
@@ -89,15 +87,6 @@ impl ServerConfig {
         format!("{}:{}", &self.host, &self.port)
             .parse::<SocketAddrV4>()
             .unwrap()
-    }
-
-    /// 获取健康检查地址
-    pub fn get_health_check(&self) -> String {
-        if let Some(path) = &self.health_check {
-            path.clone()
-        } else {
-            String::from(HEALTH_CHECK)
-        }
     }
 }
 

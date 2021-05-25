@@ -1,6 +1,10 @@
+use std::convert::Infallible;
+
 use async_graphql::{Error as AgError, ErrorExtensions};
+use async_graphql_warp::BadRequest;
 use thiserror::Error;
 use validator::ValidationErrors;
+use warp::{hyper::StatusCode, reply::WithStatus};
 
 /// 定义错误枚举
 #[derive(Debug, Error)]
@@ -22,6 +26,21 @@ pub enum AppError {
 
     #[error("用户名或密码错误")]
     UsernameOrPasswordError,
+}
+
+// warp 错误处理
+pub async fn recover(err: warp::Rejection) -> Result<WithStatus<String>, Infallible> {
+    if let Some(BadRequest(err)) = err.find() {
+        return Ok::<_, Infallible>(warp::reply::with_status(
+            err.to_string(),
+            StatusCode::BAD_REQUEST,
+        ));
+    }
+
+    Ok(warp::reply::with_status(
+        "INTERNAL_SERVER_ERROR".to_string(),
+        StatusCode::INTERNAL_SERVER_ERROR,
+    ))
 }
 
 impl AppError {
